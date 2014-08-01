@@ -233,7 +233,7 @@ static uint64_t currentProcessTime(void) {
 - (UILabel *)elapsedTextLabel {
     if (elapsedTextLabel_ == nil) {
         elapsedTextLabel_ = [[UILabel alloc] initWithFrame:CGRectZero];
-        [elapsedTextLabel_ setText:@"Time Elapsed: 00:00:00"];
+        [elapsedTextLabel_ setText:@"Elapsed Time: 00:00:000"];
     }
     return elapsedTextLabel_;
 }
@@ -272,7 +272,7 @@ static uint64_t currentProcessTime(void) {
                     seconds = seconds % 60;
                     dispatch_sync(dispatch_get_main_queue(), ^(void) {
                         elapsedTextLabel.text = [NSString stringWithFormat:
-                            @"Time Elapsed: %02u:%02u:%03u", minutes, seconds, milli];
+                                    @"Elapsed Time: %02u:%02u:%03u", minutes, seconds, milli];
                     });
                     usleep(1000);
                 } else {
