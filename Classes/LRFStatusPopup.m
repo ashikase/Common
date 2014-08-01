@@ -268,8 +268,8 @@ static uint64_t currentProcessTime(void) {
                 unsigned seconds = 0.001 * elapsed;
                 unsigned minutes = MIN((seconds / 60), 100);
                 if (minutes < 100) {
-                    seconds = seconds % 60;
                     unsigned milli = elapsed - (1000 * seconds);
+                    seconds = seconds % 60;
                     dispatch_sync(dispatch_get_main_queue(), ^(void) {
                         elapsedTextLabel.text = [NSString stringWithFormat:
                             @"Time Elapsed: %02u:%02u:%03u", minutes, seconds, milli];
