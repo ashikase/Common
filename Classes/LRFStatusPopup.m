@@ -154,12 +154,12 @@ static uint64_t currentProcessTime(void) {
 
 - (void)show:(BOOL)animated {
     if (!isAnimating_) {
-    if (IOS_LT(4_0)) {
-        [window_ addSubview:[self view]];
-    } else {
-        [window_ setRootViewController:self];
-    }
-    [window_ setHidden:NO];
+        if (IOS_LT(4_0)) {
+            [window_ addSubview:[self view]];
+        } else {
+            [window_ setRootViewController:self];
+        }
+        [window_ setHidden:NO];
 
         if (animated) {
             isAnimating_ = YES;
@@ -215,8 +215,8 @@ static uint64_t currentProcessTime(void) {
                     }];
             }
         } else {
-    [[self view] removeFromSuperview];
-    [window_ setHidden:YES];
+            [[self view] removeFromSuperview];
+            [window_ setHidden:YES];
         }
     }
 }
@@ -256,30 +256,37 @@ static uint64_t currentProcessTime(void) {
 
 - (void)startElapsedTimer {
     if ([self showsElapsedTime]) {
-        uint64_t routineStartTime = currentProcessTime();
-        UILabel *elapsedTextLabel = [self elapsedTextLabel];
-
         if (operationQueue_ == nil) {
-            operationQueue_ = [NSOperationQueue new];
-        }
-        [operationQueue_ addOperationWithBlock:^(void){
-            while (1) {
-                unsigned elapsed = floorf(0.000001 * (currentProcessTime() - routineStartTime));
-                unsigned seconds = 0.001 * elapsed;
-                unsigned minutes = MIN((seconds / 60), 100);
-                if (minutes < 100) {
-                    unsigned milli = elapsed - (1000 * seconds);
-                    seconds = seconds % 60;
-                    dispatch_sync(dispatch_get_main_queue(), ^(void) {
-                        elapsedTextLabel.text = [NSString stringWithFormat:
+            uint64_t routineStartTime = currentProcessTime();
+            UILabel *elapsedTextLabel = [self elapsedTextLabel];
+
+            NSBlockOperation *operation = [NSBlockOperation new];
+            [operation addExecutionBlock:^(void){
+                while (1) {
+                    if (![operation isCancelled]) {
+                        unsigned elapsed = floorf(0.000001 * (currentProcessTime() - routineStartTime));
+                        unsigned seconds = 0.001 * elapsed;
+                        unsigned minutes = MIN((seconds / 60), 100);
+                        if (minutes < 100) {
+                            unsigned milli = elapsed - (1000 * seconds);
+                            seconds = seconds % 60;
+                            dispatch_sync(dispatch_get_main_queue(), ^(void) {
+                                elapsedTextLabel.text = [NSString stringWithFormat:
                                     @"Elapsed Time: %02u:%02u:%03u", minutes, seconds, milli];
-                    });
-                    usleep(1000);
-                } else {
-                    break;
+                            });
+                            usleep(1000);
+                        } else {
+                            break;
+                        }
+                    } else {
+                        break;
+                    }
                 }
-            }
-        }];
+            }];
+
+            operationQueue_ = [NSOperationQueue new];
+            [operationQueue_ addOperation:operation];
+        }
     }
 }
 
