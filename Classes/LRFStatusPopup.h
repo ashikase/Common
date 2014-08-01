@@ -10,8 +10,9 @@
 @property(nonatomic, readonly) UILabel *textLabel;
 @property(nonatomic, readonly) UILabel *detailTextLabel;
 @property(nonatomic, assign) BOOL showsElapsedTime;
-- (void)show;
-- (void)hide;
+- (void)show:(BOOL)animated;
+- (void)hide:(BOOL)animated;
+- (void)hide:(BOOL)animated blinkCount:(NSUInteger)blinkCount;
 - (void)startElapsedTimer;
 - (void)stopElapsedTimer;
 @end

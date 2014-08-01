@@ -27,6 +27,7 @@ static uint64_t currentProcessTime(void) {
     UIView *statusView_;
     UILabel *elapsedTextLabel_;
 
+    BOOL isAnimating_;
     NSOperationQueue *operationQueue_;
 }
 
@@ -107,59 +108,117 @@ static uint64_t currentProcessTime(void) {
 }
 
 - (void)viewDidLayoutSubviews {
-    static CGFloat width = 280.0;
+    if (!isAnimating_) {
+        UIView *view = [self view];
+        static CGFloat width = 280.0;
 
-    UILabel *textLabel = [self textLabel];
-    [textLabel sizeToFit];
-    CGRect textLabelFrame = [textLabel frame];
-    textLabelFrame.size.width = (width - 20.0);
-    textLabelFrame.origin.x = 0.5 * (width - textLabelFrame.size.width);
-    textLabelFrame.origin.y = 10.0;
-    [textLabel setFrame:textLabelFrame];
+        UILabel *textLabel = [self textLabel];
+        [textLabel sizeToFit];
+        CGRect textLabelFrame = [textLabel frame];
+        textLabelFrame.size.width = (width - 20.0);
+        textLabelFrame.origin.x = 0.5 * (width - textLabelFrame.size.width);
+        textLabelFrame.origin.y = 10.0;
+        [textLabel setFrame:textLabelFrame];
 
-    UILabel *detailTextLabel = [self detailTextLabel];
-    [detailTextLabel sizeToFit];
-    CGRect detailTextLabelFrame = [detailTextLabel frame];
-    detailTextLabelFrame.size.width = (width - 20.0);
-    detailTextLabelFrame.origin.x = 0.5 * (width - detailTextLabelFrame.size.width);
-    detailTextLabelFrame.origin.y = 20.0 + textLabelFrame.size.height;
-    [detailTextLabel setFrame:detailTextLabelFrame];
+        UILabel *detailTextLabel = [self detailTextLabel];
+        [detailTextLabel sizeToFit];
+        CGRect detailTextLabelFrame = [detailTextLabel frame];
+        detailTextLabelFrame.size.width = (width - 20.0);
+        detailTextLabelFrame.origin.x = 0.5 * (width - detailTextLabelFrame.size.width);
+        detailTextLabelFrame.origin.y = 20.0 + textLabelFrame.size.height;
+        [detailTextLabel setFrame:detailTextLabelFrame];
 
-    CGFloat height = (30.0 + textLabelFrame.size.height + detailTextLabelFrame.size.height);
-    if ([self showsElapsedTime]) {
-        UILabel *elapsedTextLabel = [self elapsedTextLabel];
-        [elapsedTextLabel sizeToFit];
-        CGRect elapsedTextLabelFrame = [elapsedTextLabel frame];
-        elapsedTextLabelFrame.size.width = (width - 20.0);
-        elapsedTextLabelFrame.origin.x = 0.5 * (width - elapsedTextLabelFrame.size.width);
-        elapsedTextLabelFrame.origin.y = 30.0 + textLabelFrame.size.height + detailTextLabelFrame.size.height;
-        [elapsedTextLabel setFrame:elapsedTextLabelFrame];
+        CGFloat height = (30.0 + textLabelFrame.size.height + detailTextLabelFrame.size.height);
+        if ([self showsElapsedTime]) {
+            UILabel *elapsedTextLabel = [self elapsedTextLabel];
+            [elapsedTextLabel sizeToFit];
+            CGRect elapsedTextLabelFrame = [elapsedTextLabel frame];
+            elapsedTextLabelFrame.size.width = (width - 20.0);
+            elapsedTextLabelFrame.origin.x = 0.5 * (width - elapsedTextLabelFrame.size.width);
+            elapsedTextLabelFrame.origin.y = 30.0 + textLabelFrame.size.height + detailTextLabelFrame.size.height;
+            [elapsedTextLabel setFrame:elapsedTextLabelFrame];
 
-        height += (10.0 + elapsedTextLabelFrame.size.height);
+            height += (10.0 + elapsedTextLabelFrame.size.height);
+        }
+
+        CGRect viewBounds = [view bounds];
+        CGRect statusViewFrame;
+        statusViewFrame.size = CGSizeMake(width, height);
+        statusViewFrame.origin.x = 0.5 * (viewBounds.size.width - statusViewFrame.size.width),
+        statusViewFrame.origin.y = 0.5 * (viewBounds.size.height - statusViewFrame.size.height),
+        [statusView_ setFrame:statusViewFrame];
     }
-
-    CGRect viewBounds = [[self view] bounds];
-    CGRect statusViewFrame;
-    statusViewFrame.size = CGSizeMake(width, height);
-    statusViewFrame.origin.x = 0.5 * (viewBounds.size.width - statusViewFrame.size.width),
-    statusViewFrame.origin.y = 0.5 * (viewBounds.size.height - statusViewFrame.size.height),
-    [statusView_ setFrame:statusViewFrame];
 }
 
 #pragma mark - Presentation
 
-- (void)show {
+- (void)show:(BOOL)animated {
+    if (!isAnimating_) {
     if (IOS_LT(4_0)) {
         [window_ addSubview:[self view]];
     } else {
         [window_ setRootViewController:self];
     }
     [window_ setHidden:NO];
+
+        if (animated) {
+            isAnimating_ = YES;
+
+            [statusView_ setAlpha:0.0];
+            [statusView_ setTransform:CGAffineTransformMakeScale(0.8, 0.8)];
+            [UIView animateWithDuration:0.2
+                animations:^{
+                    [statusView_ setAlpha:1.0];
+                    [statusView_ setTransform:CGAffineTransformIdentity];
+                }
+                completion:^(BOOL finished) {
+                    isAnimating_ = NO;
+                }];
+        }
+    }
 }
 
-- (void)hide {
+- (void)hide:(BOOL)animated {
+    [self hide:animated blinkCount:0];
+}
+
+- (void)hide:(BOOL)animated blinkCount:(NSUInteger)blinkCount {
+    if (!isAnimating_) {
+        if (animated) {
+            isAnimating_ = YES;
+
+            if (blinkCount > 0) {
+                [UIView animateWithDuration:0.2 delay:0.2 options:UIViewAnimationOptionCurveLinear
+                    animations:^{
+                        [statusView_ setAlpha:0.0];
+                    }
+                    completion:^(BOOL finished) {
+                        [UIView animateWithDuration:0.5 delay:0.0 options:UIViewAnimationOptionCurveEaseIn
+                            animations:^{
+                                [statusView_ setAlpha:1.0];
+                            }
+                            completion:^(BOOL finished) {
+                                isAnimating_ = NO;
+                                [self hide:animated blinkCount:(blinkCount - 1)];
+                            }];
+                    }];
+            } else {
+                [UIView animateWithDuration:0.2 delay:1.0 options:UIViewAnimationOptionCurveEaseIn
+                    animations:^{
+                        [statusView_ setAlpha:0.0];
+                        [statusView_ setTransform:CGAffineTransformMakeScale(0.8, 0.8)];
+                    }
+                    completion:^(BOOL finished) {
+                        [[self view] removeFromSuperview];
+                        [window_ setHidden:YES];
+                        isAnimating_ = NO;
+                    }];
+            }
+        } else {
     [[self view] removeFromSuperview];
     [window_ setHidden:YES];
+        }
+    }
 }
 
 #pragma mark - Properties
