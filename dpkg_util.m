@@ -46,6 +46,18 @@ static NSDictionary *detailsFromDebianPackageQuery(FILE *f) {
 NSDictionary *detailsForDebianPackageWithIdentifier(NSString *identifier) {
     NSDictionary *details = nil;
 
+    // Backup stderr.
+    int devStderr = dup(STDERR_FILENO);
+    if (devStderr == -1) {
+        fprintf(stderr, "ERROR: Failed to backup stderr: errno = %d.\n", errno);
+    }
+
+    // Redirect stderr to /dev/null.
+    int devNull = open("/dev/null", O_WRONLY);
+    if (dup2(devNull, STDERR_FILENO) == -1) {
+        fprintf(stderr, "ERROR: Failed to redirect stderr to /dev/null for dpkg-query command: errno = %d.\n", errno);
+    }
+
     // NOTE: Query using -p switch (/var/lib/dpkg/available) first, as package
     //       might have been uninstalled recently due to some issue.
     //       (Uninstalled packages will appear in 'status', but without any
@@ -84,6 +96,15 @@ NSDictionary *detailsForDebianPackageWithIdentifier(NSString *identifier) {
             stat_loc = pclose(f);
         }
     }
+
+    // Restore stderr.
+    if (dup2(devStderr, STDERR_FILENO) == -1) {
+        fprintf(stderr, "ERROR: Failed to restore stderr: errno = %d.\n", errno);
+    }
+
+    // Close duplicate file descriptors.
+    close(devNull);
+    close(devStderr);
 
     return details;
 }
