@@ -65,7 +65,7 @@ NSDictionary *detailsForDebianPackageWithIdentifier(NSString *identifier) {
     FILE *f;
     NSString *query;
 
-    query = [[NSString alloc] initWithFormat:@"dpkg-query -p %@", identifier];
+    query = [[NSString alloc] initWithFormat:@"dpkg-query -p \"%@\"", identifier];
     f = popen([query UTF8String], "r");
     [query release];
 
@@ -85,7 +85,7 @@ NSDictionary *detailsForDebianPackageWithIdentifier(NSString *identifier) {
 
     // If command failed, try again using "-s" (/var/lib/dpkg/status) switch.
     if (!succeeded) {
-        query = [[NSString alloc] initWithFormat:@"dpkg-query -s %@", identifier];
+        query = [[NSString alloc] initWithFormat:@"dpkg-query -s \"%@\"", identifier];
         f = popen([query UTF8String], "r");
         [query release];
 
@@ -115,7 +115,7 @@ NSString *identifierForDebianPackageContainingFile(NSString *filepath) {
     // Determine identifier of the package that contains the specified file.
     // NOTE: We need the slow way or we need to compile the whole dpkg.
     //       Not worth it for a minor feature like this.
-    FILE *f = popen([[NSString stringWithFormat:@"dpkg-query -S %@ | head -1", filepath] UTF8String], "r");
+    FILE *f = popen([[NSString stringWithFormat:@"dpkg-query -S \"%@\" | head -1", filepath] UTF8String], "r");
     if (f != NULL) {
         // NOTE: Since there's only 1 line, we can read until a , or : is hit.
         NSMutableData *data = [NSMutableData new];
