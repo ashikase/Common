@@ -10,21 +10,7 @@
 
 #include "firmware.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-extern CFStringRef kLockdownUniqueDeviceIDKey;
 typedef void* LockdownConnectionRef;
-extern LockdownConnectionRef lockdown_connect();
-extern void lockdown_disconnect(LockdownConnectionRef connection);
-extern CFPropertyListRef lockdown_copy_value(LockdownConnectionRef connection, CFStringRef domain, CFStringRef key);
-
-extern CFPropertyListRef MGCopyAnswer(CFStringRef property);
-
-#ifdef __cplusplus
-}  // extern "C"
-#endif
 
 static inline NSString *platformVersion() {
     NSString *ret = nil;
@@ -43,7 +29,29 @@ static inline NSString *inverseDeviceIdentifier() {
     NSString *ret = nil;
 
     CFPropertyListRef value = NULL;
-    if (IOS_GTE(4_2)) {
+    if (IOS_LT(4_2)) {
+        // NOTE: Avoid linking to liblockdown as we do not use it for newer iOS versions.
+        void *handle = dlopen("/usr/lib/liblockdown.dylib", RTLD_LAZY);
+        if (handle != NULL) {
+            CFStringRef *kLockdownInverseDeviceIDKey = (CFStringRef *)dlsym(handle, "kLockdownInverseDeviceIDKey");
+            LockdownConnectionRef (*lockdown_connect)(void) = (LockdownConnectionRef (*)(void))dlsym(handle, "lockdown_connect");
+            void (*lockdown_disconnect)(LockdownConnectionRef) = (void (*)(LockdownConnectionRef))dlsym(handle, "lockdown_disconnect");
+            CFPropertyListRef (*lockdown_copy_value)(LockdownConnectionRef, CFStringRef, CFStringRef) = (CFPropertyListRef (*)(LockdownConnectionRef, CFStringRef, CFStringRef))dlsym(handle, "lockdown_copy_value");
+
+            if ((kLockdownInverseDeviceIDKey != NULL) &&
+                    (lockdown_connect != NULL) &&
+                    (lockdown_copy_value != NULL) &&
+                    (lockdown_disconnect != NULL)
+               ) {
+                LockdownConnectionRef lockdown = lockdown_connect();
+                if (lockdown != NULL) {
+                    value = (CFStringRef)lockdown_copy_value(lockdown, NULL, *kLockdownInverseDeviceIDKey);
+                    lockdown_disconnect(lockdown);
+                }
+            }
+            dlclose(handle);
+        }
+    } else {
         // NOTE: Can't link to dylib as it doesn't exist in older iOS versions.
         void *handle = dlopen("/usr/lib/libMobileGestalt.dylib", RTLD_LAZY);
         if (handle != NULL) {
@@ -70,10 +78,26 @@ static inline NSString *uniqueDeviceIdentifier() {
 
     CFPropertyListRef value = NULL;
     if (IOS_LT(4_2)) {
-        LockdownConnectionRef lockdown = lockdown_connect();
-        if (lockdown != NULL) {
-            value = (CFStringRef)lockdown_copy_value(lockdown, NULL, kLockdownUniqueDeviceIDKey);
-            lockdown_disconnect(lockdown);
+        // NOTE: Avoid linking to liblockdown as we do not use it for newer iOS versions.
+        void *handle = dlopen("/usr/lib/liblockdown.dylib", RTLD_LAZY);
+        if (handle != NULL) {
+            CFStringRef *kLockdownUniqueDeviceIDKey = (CFStringRef *)dlsym(handle, "kLockdownUniqueDeviceIDKey");
+            LockdownConnectionRef (*lockdown_connect)(void) = (LockdownConnectionRef (*)(void))dlsym(handle, "lockdown_connect");
+            void (*lockdown_disconnect)(LockdownConnectionRef) = (void (*)(LockdownConnectionRef))dlsym(handle, "lockdown_disconnect");
+            CFPropertyListRef (*lockdown_copy_value)(LockdownConnectionRef, CFStringRef, CFStringRef) = (CFPropertyListRef (*)(LockdownConnectionRef, CFStringRef, CFStringRef))dlsym(handle, "lockdown_copy_value");
+
+            if ((kLockdownUniqueDeviceIDKey != NULL) &&
+                    (lockdown_connect != NULL) &&
+                    (lockdown_copy_value != NULL) &&
+                    (lockdown_disconnect != NULL)
+               ) {
+                LockdownConnectionRef lockdown = lockdown_connect();
+                if (lockdown != NULL) {
+                    value = (CFStringRef)lockdown_copy_value(lockdown, NULL, *kLockdownUniqueDeviceIDKey);
+                    lockdown_disconnect(lockdown);
+                }
+            }
+            dlclose(handle);
         }
     } else {
         // NOTE: Can't link to dylib as it doesn't exist in older iOS versions.
