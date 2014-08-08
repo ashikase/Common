@@ -23,12 +23,12 @@ static NSDictionary *detailsFromDebianPackageQuery(FILE *f) {
                 if (firstColon != NSNotFound) {
                     NSUInteger length = [string length];
                     if (length > (firstColon + 1)) {
-                        NSCharacterSet *set = [[NSCharacterSet whitespaceCharacterSet] invertedSet];
-                        NSRange range = NSMakeRange((firstColon + 1), (length - firstColon - 1));
-                        NSUInteger firstNonSpace = [string rangeOfCharacterFromSet:set options:0 range:range].location;
                         NSString *key = [string substringToIndex:firstColon];
-                        NSString *value = [string substringFromIndex:firstNonSpace];
-                        [details setObject:value forKey:key];
+                        NSString *value = [string substringFromIndex:(firstColon + 1)];
+                        value = [value stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+                        if ([value length] > 0) {
+                            [details setObject:value forKey:key];
+                        }
                     }
                 }
                 [string release];
