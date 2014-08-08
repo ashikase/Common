@@ -38,6 +38,33 @@ static inline NSString *platformVersion() {
     return ret;
 }
 
+// NOTE: This is used in crash reports as the "CrashReporter Key".
+static inline NSString *inverseDeviceIdentifier() {
+    NSString *ret = nil;
+
+    CFPropertyListRef value = NULL;
+    if (IOS_GTE(4_2)) {
+        // NOTE: Can't link to dylib as it doesn't exist in older iOS versions.
+        void *handle = dlopen("/usr/lib/libMobileGestalt.dylib", RTLD_LAZY);
+        if (handle != NULL) {
+            CFPropertyListRef (*MGCopyAnswer)(CFStringRef) = (CFPropertyListRef (*)(CFStringRef))dlsym(handle, "MGCopyAnswer");
+            if (MGCopyAnswer != NULL) {
+                value = MGCopyAnswer(CFSTR("InverseDeviceID"));
+            }
+            dlclose(handle);
+        }
+    }
+
+    if (value != NULL) {
+        if (CFGetTypeID(value) == CFStringGetTypeID()) {
+            ret = [NSString stringWithString:(NSString *)value];
+        }
+        CFRelease(value);
+    }
+
+    return ret;
+}
+
 static inline NSString *uniqueDeviceIdentifier() {
     NSString *ret = nil;
 
