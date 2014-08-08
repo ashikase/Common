@@ -112,6 +112,18 @@ NSDictionary *detailsForDebianPackageWithIdentifier(NSString *identifier) {
 NSString *identifierForDebianPackageContainingFile(NSString *filepath) {
     NSString *identifier = nil;
 
+    // Backup stderr.
+    int devStderr = dup(STDERR_FILENO);
+    if (devStderr == -1) {
+        fprintf(stderr, "ERROR: Failed to backup stderr: errno = %d.\n", errno);
+    }
+
+    // Redirect stderr to /dev/null.
+    int devNull = open("/dev/null", O_WRONLY);
+    if (dup2(devNull, STDERR_FILENO) == -1) {
+        fprintf(stderr, "ERROR: Failed to redirect stderr to /dev/null for dpkg-query command: errno = %d.\n", errno);
+    }
+
     // Determine identifier of the package that contains the specified file.
     // NOTE: We need the slow way or we need to compile the whole dpkg.
     //       Not worth it for a minor feature like this.
@@ -138,6 +150,15 @@ NSString *identifierForDebianPackageContainingFile(NSString *filepath) {
         [data release];
         pclose(f);
     }
+
+    // Restore stderr.
+    if (dup2(devStderr, STDERR_FILENO) == -1) {
+        fprintf(stderr, "ERROR: Failed to restore stderr: errno = %d.\n", errno);
+    }
+
+    // Close duplicate file descriptors.
+    close(devNull);
+    close(devStderr);
 
     return identifier;
 }
