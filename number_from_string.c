@@ -32,7 +32,7 @@ unsigned long long unsignedLongLongFromHexString(const char *string, int length)
             result = result * 16 + (c - 'a' + 10);
         } else if ((c >= 'A') && (c <= 'F')) {
             result = result * 16 + (c - 'A' + 10);
-        } else {
+        } else if (c != 'x') {
             break;
         }
     }
