@@ -7,6 +7,8 @@
 #ifndef COMMON_FIRMWARE_H_
 #define COMMON_FIRMWARE_H_
 
+#include <CoreFoundation/CFBase.h>
+
 #ifndef kCFCoreFoundationVersionNumber_iPhoneOS_2_0
 #define kCFCoreFoundationVersionNumber_iPhoneOS_2_0 478.23
 #endif
@@ -43,9 +45,9 @@
 #define kCFCoreFoundationVersionNumber_iOS_4_2 550.52
 #endif
 
-#ifndef kCFCoreFoundationVersionNumber_iOS_4_3
+// NOTE: Apple's CFBase.h defines 4.3 to be the same as 4.2.
+#undef  kCFCoreFoundationVersionNumber_iOS_4_3
 #define kCFCoreFoundationVersionNumber_iOS_4_3 550.58
-#endif
 
 #ifndef kCFCoreFoundationVersionNumber_iOS_5_0
 #define kCFCoreFoundationVersionNumber_iOS_5_0 675.00
@@ -103,9 +105,9 @@
 #define kCFCoreFoundationVersionNumber_iOS_9_2 1242.13
 #endif
 
-#ifndef kCFCoreFoundationVersionNumber_iOS_9_3
+// NOTE: Apple's CFBase.h defines 9.3 to be the same as 9.2.
+#undef  kCFCoreFoundationVersionNumber_iOS_9_3
 #define kCFCoreFoundationVersionNumber_iOS_9_3 1280.38
-#endif
 
 #ifndef kCFCoreFoundationVersionNumber_iOS_10_0
 #define kCFCoreFoundationVersionNumber_iOS_10_0 1348.00
