@@ -104,7 +104,19 @@
 #endif
 
 #ifndef kCFCoreFoundationVersionNumber_iOS_9_3
-#define kCFCoreFoundationVersionNumber_iOS_9_3 1280.30
+#define kCFCoreFoundationVersionNumber_iOS_9_3 1280.38
+#endif
+
+#ifndef kCFCoreFoundationVersionNumber_iOS_10_0
+#define kCFCoreFoundationVersionNumber_iOS_10_0 1348.00
+#endif
+
+#ifndef kCFCoreFoundationVersionNumber_iOS_10_1
+#define kCFCoreFoundationVersionNumber_iOS_10_1 1348.00
+#endif
+
+#ifndef kCFCoreFoundationVersionNumber_iOS_10_2
+#define kCFCoreFoundationVersionNumber_iOS_10_2 1348.22
 #endif
 
 // Comparison Macros
