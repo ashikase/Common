@@ -6,6 +6,8 @@
 
 #include "nslog_to_os_log.h"
 
+#include <dlfcn.h>
+
 struct os_log_s *_os_log_default = NULL;
 bool (*os_log_type_enabled)(os_log_t oslog, os_log_type_t type) = NULL;
 void (*_os_log_impl)(void *dso, os_log_t log, os_log_type_t type, const char *format, uint8_t *buf, unsigned int size) = NULL;
